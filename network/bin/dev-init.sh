@@ -194,6 +194,11 @@ echo    '========= Anchor peer update tx for DfarmadminMSP ====='
 
 rm  $DFARM_CHANNEL_BLOCK
 
+
+# docker rm -f $(docker ps -aq)
+# cd ../Dfarm-app
+# ./startFabric.sh
+
 echo "=== Initialization completed * Environment launched ==="
 echo "=== dev-stop.sh    to stop"
 echo "=== dev-start.sh   to start"

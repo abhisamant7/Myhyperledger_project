@@ -17,7 +17,7 @@ export ORDERER_ADDRESS=orderer.dfarmadmin.com:7050
 export CORE_PEER_LOCALMSPID=DfarmadminMSP
 export CORE_PEER_MSPCONFIGPATH=$PWD/client/dfarmadmin/admin/msp
 export CORE_PEER_ADDRESS=dfarmadmin-peer1.dfarmadmin.com:7051
-peer channel create -o $ORDERER_ADDRESS -c dfarmchannel -f ./config/dfarmchannel.tx
+peer channel create -o $ORDERER_ADDRESS -c dfarmchannel -f ./dfarmchannel.tx
 
 echo    '========= Joining the dfarmadmin-peer1 to Dfarm channel ============'
 DFARM_CHANNEL_BLOCK=./dfarmchannel.block

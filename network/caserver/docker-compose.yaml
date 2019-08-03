@@ -3,7 +3,47 @@ version: '2'
 networks:
   dfarm:
 
+
 services:
+#ca 
+  ca.dfarmadmin.com:
+    image: hyperledger/fabric-ca
+    environment:
+      - FABRIC_CA_HOME=/var/hyperledger/fabric-ca-server
+      - FABRIC_CA_SERVER_CA_NAME=ca.dfarmadmin.com
+      - FABRIC_CA_SERVER_CA_CERTFILE=/var/hyperledger/fabric-ca-server-config/localhost-7054.pem
+      - FABRIC_CA_SERVER_CA_KEYFILE=/var/hyperledger/fabric-ca-server-config/162775ee8805689b59976ed663539b5c015f7c475040ed60094cc64cd9f816bc_sk
+    ports:
+      - "7054:7054"
+    command: sh -c 'fabric-ca-server start -b admin:adminpw'
+    volumes:
+      - ${PWD}/caserver/admin/msp:/var/hyperledger/fabric-ca-server-config
+    container_name: ca.dfarmadmin.com
+    networks:
+      - dfarm
+
+
+  # root.caserver.com:
+  #   container_name: root.caserver.com
+  #   hostname: root
+  #   domainname: caserver.com
+  #   image: hyperledger/fabric-ca:$IMAGE_TAG
+  #   environment:
+  #     - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
+  #     - FABRIC_CA_SERVER_CA_NAME=root.caserver
+  #     - FABRIC_CA_SERVER_TLS_ENABLED=false
+  #     # - FABRIC_CA_SERVER_TLS_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.org1.example.com-cert.pem
+  #     # - FABRIC_CA_SERVER_TLS_KEYFILE=/etc/hyperledger/fabric-ca-server-config/CA1_PRIVATE_KEY
+  #   ports:
+  #     - "7054:7054"
+  #   command: sh -c 'fabric-ca-server start --cfg.identities.allowremove --cfg.affiliations.allowremove' 
+  #   volumes:
+  #     - ${PWD}/server:/etc/hyperledger/fabric-ca-server
+    
+  #   networks:
+  #     - dfarm
+
+
   # Orderer
   orderer.dfarmadmin.com:
     container_name: orderer.dfarmadmin.com
@@ -91,6 +131,7 @@ services:
       - FABRIC_CFG_PATH=/var/hyperledger/config
       # - CORE_LOGGING_LEVEL=debug
       - FABRIC_LOGGING_SPEC=INFO
+      - CORE_CHAINCODE_LOGGING_LEVEL=info
 
       - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
 
@@ -105,6 +146,8 @@ services:
       - CORE_PEER_LOCALMSPID=DfarmretailMSP
       - CORE_PEER_MSPCONFIGPATH=/var/hyperledger/msp
       - CORE_PEER_TLS_ENABLED=false
+      - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb:5984
       # - CORE_PEER_GOSSIP_USELEADERELECTION=true
       # - CORE_PEER_GOSSIP_ORGLEADER=false
       # - CORE_PEER_PROFILE_ENABLED=true
@@ -131,5 +174,47 @@ services:
       - 8053:8053
     networks:
       - dfarm
+
+  couchdb:
+    container_name: couchdb
+    image: hyperledger/fabric-couchdb
+    # Populate the COUCHDB_USER and COUCHDB_PASSWORD to set an admin user and password
+    # for CouchDB.  This will prevent CouchDB from operating in an "Admin Party" mode.
+    environment:
+      - COUCHDB_USER=
+      - COUCHDB_PASSWORD=
+    ports:
+      - 5984:5984
+    networks:
+      - dfarm
+
+   
+  cli:
+    container_name: cli
+    image: hyperledger/fabric-tools
+    tty: true
+    environment:
+      - GOPATH=/opt/gopath
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - FABRIC_LOGGING_SPEC=info
+      - CORE_PEER_ID=cli
+      - CORE_PEER_ADDRESS=dfarmadmin-peer1.dfarmadmin.com:7051
+      - CORE_PEER_LOCALMSPID=DfarmadminMSP
+      #- CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
+      -  CORE_PEER_MSPCONFIGPATH=/var/hyperledger/msp
+      - CORE_CHAINCODE_KEEPALIVE=10
+    working_dir:  $HOME
+    command: /bin/bash
+    volumes:
+        - /var/run/:/host/var/run/
+        - ./../chaincode/:/opt/gopath/src/github.com/
+        - ./crypto-config:/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/
+    networks:
+        - dfarm
+    #depends_on:
+    #  - orderer.example.com
+    #  - peer0.org1.example.com
+    #  - couchdb   
+      
 
   
